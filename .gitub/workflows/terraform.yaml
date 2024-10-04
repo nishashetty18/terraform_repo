@@ -1,0 +1,55 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - '**'           # Trigger on push to any branch (initial push for feature branch)
+  pull_request:
+    branches:
+      - main           # Trigger on pull request to main branch
+  workflow_dispatch:    # Allows you to manually trigger the workflow
+
+jobs:
+  terraform:
+    name: Terraform Plan and Apply
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [dev]  # Only apply to 'dev' environment after PR is merged
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Step to login to Azure using OIDC token
+      - name: Login to Azure using OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Plan step for all feature branches or pull request branches
+      - name: Terraform Plan for Branch or PR
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        run: terraform plan -var-file=dev.tfvars -out=plan.out
+
+      # Only apply when PR is merged into the 'main' branch
+      - name: Terraform Apply to Dev Environment (After PR merge)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve plan.out
