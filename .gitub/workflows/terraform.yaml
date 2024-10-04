@@ -1,0 +1,71 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - feature  # Triggers on push to any feature branch
+  
+jobs:
+  terraform:
+    name: Terraform Plan and Apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Step to login to Azure using OIDC token
+      - name: Login to Azure using OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Plan step for all feature branches or pull request branches
+      - name: Terraform Plan
+        run: terraform plan -var-file=dev.tfvars -out=plan.out
+
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: terraform
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true  # Only runs if the PR is merged
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Step to login to Azure using OIDC token
+      - name: Login to Azure using OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+          
+
+      - name: Terraform Apply to Dev Environment
+        run: terraform apply -auto-approve plan.out
+
+
