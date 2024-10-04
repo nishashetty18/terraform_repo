@@ -70,3 +70,5 @@ jobs:
 
       - name: Terraform Apply to Dev Environment
         run: terraform apply -auto-approve plan.out
+
+        
