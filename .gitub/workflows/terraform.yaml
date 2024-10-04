@@ -1,84 +1,16 @@
-name: Terraform Deployment
+name: Test Workflow
 
 on:
   push:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
-  
-
-permissions:
-  id-token: write  # Necessary for OIDC
-  contents: read   # Allow access to the repository contents
 
 jobs:
-  terraform-plan:
-    name: Terraform Init and Plan on Feature Branch
+  test:
     runs-on: ubuntu-latest
-
-    # This job will run on any feature branch push
-    if: startsWith(github.ref, 'refs/heads/feature/') 
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0  # Your desired Terraform version
-
-      - name: Login to Azure using OIDC
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan -var-file=dev.tfvars -out=plan.out
-
-      # Optional: Upload plan as artifact
-      - name: Upload Plan
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-plan
-          path: plan.out
-
-      # Optional: Create a pull request
-      - name: Create Pull Request
-        run: |
-          gh pr create --title "Deploy feature to dev" \
-            --body "This PR is for deploying feature branch changes to dev." \
-            --base dev --head ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub Actions
-
-  terraform-apply:
-    name: Terraform Apply on Merge to Dev
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true  # Only run after PR is merged
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0
-
-      - name: Login to Azure using OIDC
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve plan.out
+        
+      - name: Run a test command
+        run: echo "Workflow triggered successfully!"
