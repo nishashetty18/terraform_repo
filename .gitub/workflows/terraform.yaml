@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
-  pull_request:
-    branches:
-      - dev  # Trigger when PR is merged into dev branch
+  
 
 permissions:
   id-token: write  # Necessary for OIDC
