@@ -1,3 +1,3 @@
-name = "dev-test-rg"
+name = "test-rg"
 location = "eastus"
-strorageacountname = "dev-samplestorageaccount768"
+strorageacountname = "samplestorageaccount768"
