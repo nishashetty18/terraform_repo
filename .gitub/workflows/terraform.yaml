@@ -3,7 +3,7 @@ name: Test Workflow
 on:
   push:
     branches:
-      - 'feature/*'  # Trigger on any push to a feature branch
+      - feature # Trigger on any push to a feature branch
 
 jobs:
   test:
