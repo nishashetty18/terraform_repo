@@ -1,3 +1,3 @@
-name = "prod-test-rg"
-location = "eastus"
-strorageacountname = "prod-samplestorageaccount768"
+#name = "prod-test-rg"
+#location = "eastus"
+#strorageacountname = "prod-samplestorageaccount768"
