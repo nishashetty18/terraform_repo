@@ -45,7 +45,7 @@ jobs:
           path: ~/.terraform.d/plugin-cache
           key: terraform-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
           restore-keys: terraform-${{ runner.os }}-
-          
+
       - name: Terraform Init
         run: terraform init
 
@@ -53,7 +53,5 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -var-file=dev.tfvars -out=plan.out
+        run: terraform plan -var-file=dev_terraform.tfvars -out=plan.out
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve plan.out
