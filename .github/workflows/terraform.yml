@@ -3,7 +3,11 @@ name: Terraform Deployment
 on:
   push:
     branches:
-      - main
+      - feature/*   # Trigger terraform plan on feature branches
+      - dev         # Trigger terraform apply on the dev branch
+  pull_request:
+    branches:
+      - dev         # For creating pull requests to dev
 
 permissions:
   id-token: write
@@ -38,6 +42,7 @@ jobs:
           echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
           echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+
       - name: Cache Terraform Providers
         uses: actions/cache@v2
         with:
@@ -45,14 +50,19 @@ jobs:
           key: terraform-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
           restore-keys: terraform-${{ runner.os }}-
 
+      # Terraform Init is required for both plan and apply
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Validate
         run: terraform validate
 
+      # Run Terraform Plan only on feature branches
       - name: Terraform Plan
+        if: github.ref == 'refs/heads/feature'   # Conditional check for feature branch
         run: terraform plan -var-file=dev_terraform.tfvars -out=plan.out
 
-
-        
+      # Run Terraform Apply only on the dev branch
+      #- name: Terraform Apply
+       # if: github.ref == 'refs/heads/dev'       # Conditional check for dev branch
+        #run: terraform apply -auto-approve plan.out
