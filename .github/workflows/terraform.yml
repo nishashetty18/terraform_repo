@@ -75,5 +75,10 @@ jobs:
 
       # Terraform Apply (only when merged into dev)
       #- name: Terraform Apply
+<<<<<<< HEAD
       #  if: github.ref_name == 'dev' && github.event_name == 'pull_request' && github.event.action == 'closed'
        # run: terraform apply -auto-approve plan.out
+=======
+       # if: github.ref == 'refs/heads/dev'       # Conditional check for dev branch
+
+>>>>>>> 2eb4cfafa15602afdfaabbafdd6e1c31d9cd718e
