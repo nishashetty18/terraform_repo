@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    
+
       # Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -75,7 +75,7 @@ jobs:
             --head ${{ github.ref_name }}
 
       # Terraform Apply (only when merged into dev)
-       - name: Terraform Apply
+      - name: Terraform Apply
         if: github.ref_name == 'dev' && github.event_name == 'pull_request' && github.event.action == 'closed'
         run: |
           echo "Successfully applied Terraform changes on dev."
