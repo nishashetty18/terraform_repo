@@ -65,4 +65,4 @@ jobs:
       # Run Terraform Apply only on the dev branch
       #- name: Terraform Apply
        # if: github.ref == 'refs/heads/dev'       # Conditional check for dev branch
-        #run: terraform apply -auto-approve plan.out
+
