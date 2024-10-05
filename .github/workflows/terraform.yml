@@ -3,61 +3,16 @@ name: Terraform Deployment
 on:
   push:
     branches:
-      - 'feature/*'  # Trigger on any feature branch
-  pull_request:
-    branches:
-      - dev  # Trigger when PR is merged into dev branch
+      - main
 
 permissions:
-  id-token: write  # Necessary for OIDC
-  contents: read   # Allow access to the repository contents
+  id-token: write
+  contents: read
 
 jobs:
-  terraform-plan:
-    name: Terraform Init and Plan on Feature Branch
+  terraform:
+    name: Terraform Init, Plan, and Apply
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feature/*'  # Only runs on feature branches
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0  # Your desired Terraform version
-
-      - name: Login to Azure using OIDC
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan -var-file=dev.tfvars -out=plan.out
-
-      # Optional: Upload plan as artifact
-      - name: Upload Plan
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-plan
-          path: plan.out
-
-      # Optional: Automatically create a pull request (requires a GitHub token)
-      - name: Create Pull Request
-        run: |
-          gh pr create --title "Deploy feature to dev" \
-            --body "This PR is for deploying feature branch changes to dev." \
-            --base dev --head ${{ github.ref }}
-
-  terraform-apply:
-    name: Terraform Apply on Merge to Dev
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true  # Only run after PR is merged
 
     steps:
       - name: Checkout Code
@@ -68,6 +23,7 @@ jobs:
         with:
           terraform_version: 1.5.0
 
+      # Step to login to Azure using OIDC (keep this step)
       - name: Login to Azure using OIDC
         uses: azure/login@v1
         with:
@@ -75,10 +31,28 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # Set environment variables for Terraform to use Service Principal auth
+      - name: Set Terraform Azure credentials
+        run: |
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+      - name: Cache Terraform Providers
+        uses: actions/cache@v2
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: terraform-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
+          restore-keys: terraform-${{ runner.os }}-
+
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve plan.out
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=dev_terraform.tfvars -out=plan.out
+
 
         
