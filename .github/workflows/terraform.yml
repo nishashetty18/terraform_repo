@@ -30,7 +30,7 @@ jobs:
         with:
           terraform_version: 1.5.0
 
-      # Login to Azure using OIDC
+      # Step to login to Azure using OIDC (keep this step)
       - name: Login to Azure using OIDC
         uses: azure/login@v1
         with:
