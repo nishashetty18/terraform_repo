@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - dev        # Trigger workflow on pull request to dev
+    types: [closed]
   workflow_dispatch:
 
 permissions:
@@ -74,11 +75,13 @@ jobs:
             --base dev \
             --head ${{ github.ref_name }}
 
-      # Terraform Apply (only when merged into dev)
+           # Terraform Apply (only when merged into dev)
       - name: Terraform Apply
-        if: github.ref_name == 'dev' && github.event_name == 'pull_request' && github.event.action == 'closed'
+        if: github.ref_name == 'dev' && github.event_name == 'pull_request' && github.event.pull_request.merged == true
         run: |
           echo "Successfully applied Terraform changes on dev."
+        # terraform apply -auto-approve plan.out
+
        # if: github.ref == 'refs/heads/dev'       # Conditional check for dev branch
 
 
