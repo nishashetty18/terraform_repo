@@ -9,11 +9,12 @@ on:
         - feature/one
 
 permissions:
-    contents: read
-    issues: write
+  id-token: write
+  contents: read
+  pull-requests: write 
 
 jobs:
-  gcp-deploy:
+  terraform-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Git Repository
