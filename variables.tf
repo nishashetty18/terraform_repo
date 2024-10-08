@@ -8,10 +8,11 @@ variable "name" {
     description = "This is the location for the resource group"
    
 }
-variable "strorageacountname" {
+variable "storageaccountname" {
     type = string
     description = "Name of the storage account"
   
 }
+
 
 
