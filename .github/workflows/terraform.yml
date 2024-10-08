@@ -1,30 +1,25 @@
-name: Terraform Deployment
+name: Terraform PROD Deployment
 
 on:
-  push:
-    branches:
-      - feature/*  # Trigger workflow on any feature branch
-  pull_request:
-    branches:
-      - dev        # Trigger workflow on pull request to dev
-    types: [closed]
-  workflow_dispatch:
+    push:
+      branches:
+        - feature/one
+    workflow_dispatch:
+      branches:
+        - feature/one
 
 permissions:
-  id-token: write
-  contents: read
-  pull-requests: write  # Allow workflow to create a pull request
+    contents: read
+    issues: write
 
 jobs:
-  terraform:
-    name: Terraform Plan and Apply
+  gcp-deploy:
     runs-on: ubuntu-latest
-
     steps:
-
-      # Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3.0.0
+        with:
+          fetch-depth: 0
 
       # Set up Terraform
       - name: Set up Terraform
@@ -48,43 +43,28 @@ jobs:
           echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      # Cache Terraform providers
-      - name: Cache Terraform Providers
-        uses: actions/cache@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
         with:
-          path: ~/.terraform.d/plugin-cache
-          key: terraform-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
-          restore-keys: terraform-${{ runner.os }}-
+            terraform_version: 1.5.7
 
-      # Terraform Init
-      - name: Terraform Init
-        run: terraform init
-
-      # Terraform Plan (for feature branches)
-      - name: Terraform Plan
-        if: github.ref_name != 'dev'  # Only plan on feature branches
-        run: terraform plan -var-file=dev_terraform.tfvars -out=plan.out
-
-      # Automate Pull Request Creation from Feature Branch to Dev
-      - name: Create Pull Request to dev
-        if: github.ref_name != 'dev'  # Only create PR for feature branches
+      - name: Terraform init and validate
         run: |
-          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
-          gh pr create --title "Merge ${{ github.ref_name }} into dev" \
-            --body "Auto-generated PR from feature branch." \
-            --base dev \
-            --head ${{ github.ref_name }}
+          terraform init
 
-           # Terraform Apply (only when merged into dev)
-      - name: Terraform Apply
-        if: github.ref_name == 'dev' && github.event_name == 'pull_request' && github.event.pull_request.merged == true
+      - name: Terraform plan
         run: |
-          echo "Successfully applied Terraform changes on dev."
-        # terraform apply -auto-approve plan.out
+          terraform plan
 
-       # if: github.ref == 'refs/heads/dev'       # Conditional check for dev branch
+      - uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: nishashetty18
+          minimum-approvals: 1
+          issue-title: "Deploying v1.0.0 to prod"
+          issue-body: "Review the terraform plan, then approve or deny the deployment of v1.0.0 to prod."
+          exclude-workflow-initiator-as-approver: false
 
-
-
-
-
+      - name: Terraform apply
+        run: |
+          terraform apply
