@@ -56,7 +56,7 @@ jobs:
 
       - name: Terraform plan
         run: |
-          terraform plan
+          terraform plan --var-file=dev_terraform.tfvars
 
       - uses: trstringer/manual-approval@v1
         with:
@@ -67,6 +67,7 @@ jobs:
           issue-body: "Review the terraform plan, then approve or deny the deployment of v1.0.0 to prod."
           exclude-workflow-initiator-as-approver: false
 
-      - name: Terraform apply
+      - name: successfull
         run: |
-          terraform apply
+          echo "Successful"
+
