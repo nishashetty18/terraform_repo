@@ -1,37 +1,33 @@
-name: Terraform Deployment
+name: Terraform PROD Deployment
 
 on:
   push:
     branches:
-      - feature/*  # Trigger workflow on any feature branch
+      - feature/one
   pull_request:
-    branches:
-      - dev        # Trigger workflow on pull request to dev
-  workflow_dispatch:
+    types: [review_requested, ready_for_review]  # Proper indentation
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write  # Allow workflow to create a pull request
+  pull-requests: write 
 
 jobs:
-  terraform:
-    name: Terraform Plan and Apply
+  terraform-deploy:
     runs-on: ubuntu-latest
-
     steps:
-
-      # Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3.0.0
+        with:
+          fetch-depth: 0
 
       # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0
+          terraform_version: 1.5.7
 
-      # Step to login to Azure using OIDC (keep this step)
+      # Step to login to Azure using OIDC
       - name: Login to Azure using OIDC
         uses: azure/login@v1
         with:
@@ -47,41 +43,49 @@ jobs:
           echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      # Cache Terraform providers
-      - name: Cache Terraform Providers
-        uses: actions/cache@v2
-        with:
-          path: ~/.terraform.d/plugin-cache
-          key: terraform-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
-          restore-keys: terraform-${{ runner.os }}-
+      - name: Terraform init and validate
+        run: |
+          terraform init
 
-      # Terraform Init
-      - name: Terraform Init
+      - name: Terraform plan
+        run: |
+          terraform plan --var-file=dev_terraform.tfvars
+
+      - name: Create Pull Request from Dev to Prod
+        if: success()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Automated PR: Terraform Plan Successful"
+          branch: dev
+          base: main
+          title: "Promote changes from dev to prod"
+          body: |
+            This PR was automatically created based on the successful execution of `terraform plan` in the `dev` branch.
+            Upon approval, this will trigger `terraform apply` on the `prod` environment.
+
+  terraform-apply:
+    name: Terraform Apply on Prod
+    runs-on: ubuntu-latest
+    needs: terraform-deploy  # Correct dependency
+    if: github.event.pull_request.merged == true  # This requires a `pull_request_target` event
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Initialize Terraform
         run: terraform init
 
-      # Terraform Plan (for feature branches)
-      - name: Terraform Plan
-        if: github.ref_name != 'dev'  # Only plan on feature branches
-        run: terraform plan -var-file=dev_terraform.tfvars -out=plan.out
-
-      # Automate Pull Request Creation from Feature Branch to Dev
-      - name: Create Pull Request to dev
-        if: github.ref_name != 'dev'  # Only create PR for feature branches
-        run: |
-          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
-          gh pr create --title "Merge ${{ github.ref_name }} into dev" \
-            --body "Auto-generated PR from feature branch." \
-            --base dev \
-            --head ${{ github.ref_name }}
-
-      # Terraform Apply (only when merged into dev)
       - name: Terraform Apply
-        if: github.ref_name == 'dev' && github.event_name == 'pull_request' && github.event.action == 'closed'
-        run: |
-          echo "Successfully applied Terraform changes on dev."
-       # if: github.ref == 'refs/heads/dev'       # Conditional check for dev branch
+        run: terraform apply --auto-approve
 
+      - name: Success Message
+        run: echo "Terraform Apply Successful!"
 
-
-
-
+        
