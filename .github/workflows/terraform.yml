@@ -68,7 +68,7 @@ jobs:
     name: Terraform Apply on Prod
     runs-on: ubuntu-latest
     needs: terraform-deploy  # Correct dependency
-    if: github.event.pull_request.merged == true  # This requires a `pull_request_target` event
+    if: github.event.review.state == 'approved'   # This requires a `pull_request_target` event
 
     steps:
       - name: Checkout code
@@ -89,3 +89,5 @@ jobs:
         run: echo "Terraform Apply Successful!"
 
         
+
+
