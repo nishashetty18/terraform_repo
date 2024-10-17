@@ -58,7 +58,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Automated PR: Terraform Plan Successful"
           branch: dev
-          base: prod
+          base: main
           title: "Promote changes from dev to prod"
           body: |
             This PR was automatically created based on the successful execution of `terraform plan` in the `dev` branch.
