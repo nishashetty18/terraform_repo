@@ -46,12 +46,18 @@ jobs:
         id: terraform-plan
         run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan
 
-      - name: Generate Plan JSON and Check for Changes
+      - name: Debug Plan File
         run: |
-          if [ ! -f tfplan ]; then
-            echo "tfplan file not found!"
+          if [ -f tfplan ]; then
+            echo "tfplan exists and is:"
+            file tfplan
+          else
+            echo "tfplan file is missing."
             exit 1
           fi
+
+      - name: Check for Changes
+        run: |
           terraform show -json tfplan > plan.json || { echo "Failed to generate plan.json"; exit 1; }
           if [ ! -s plan.json ]; then
             echo "Generated plan.json is empty or invalid."
@@ -70,9 +76,3 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-
-      - name: Notify Changes for Approval
-        if: env.CHANGES_DETECTED != '0'
-        run: |
-          echo "Changes detected in the plan. Sending notification for approval."
-          echo "Terraform changes detected. Please review and approve." | mail -s "Terraform Plan Approval Needed" recipient@example.com
