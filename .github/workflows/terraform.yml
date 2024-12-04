@@ -44,7 +44,7 @@ jobs:
 
       - name: Terraform Plan
         id: terraform-plan
-        run: terraform plan --var-file=develop_terraform.tfvars -out=tfplan
+        run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan
 
       - name: Check for Changes
         id: check-changes
