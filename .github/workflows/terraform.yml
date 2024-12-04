@@ -56,19 +56,31 @@ jobs:
             exit 1
           fi
 
-      - name: Check for Changes
-        run: |
-          changes=$(jq '.resource_changes | length' plan.json)
-          echo "CHANGES_DETECTED=$changes" >> $GITHUB_ENV
-          if [ "$changes" -gt 0 ]; then
-            echo "Changes detected in the Terraform plan: $changes resources modified."
-            # Trigger email notification or manual approval step here
-            exit 1
-          else
-            echo "No changes detected in the Terraform plan."
-          fi
-        env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      - name: Convert Plan to JSON
+      run: |
+        terraform show -json tfplan > plan.json || { echo "Failed to generate plan.json"; exit 1; }
+        if [ ! -f plan.json ]; then
+          echo "plan.json file does not exist!"
+          exit 1
+        fi
+        if [ ! -s plan.json ]; then
+          echo "plan.json is empty or invalid!"
+          exit 1
+        fi
+
+    - name: Check for Changes
+      run: |
+        changes=$(jq '.resource_changes | length' plan.json)
+        echo "CHANGES_DETECTED=$changes" >> $GITHUB_ENV
+        if [ "$changes" -gt 0 ]; then
+          echo "Changes detected in the Terraform plan: $changes resources modified."
+          # Trigger email notification or manual approval step here
+          exit 1
+        else
+          echo "No changes detected in the Terraform plan."
+        fi
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
