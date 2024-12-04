@@ -1,4 +1,4 @@
-name = "test-rg"
+name = "yghujk"
 location = "eastus"
-storageaccountname = "mystorage64748"
+storageaccountname = "mystorage6474878"
 #vm_name = "my-vm"
