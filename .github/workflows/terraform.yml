@@ -1,96 +1,49 @@
-name: Terraform PROD Deployment
+name: Terraform Deployment Workflow
 
 on:
   push:
     branches:
-      - feature/one
-  pull_request:
-    types: [review_requested, ready_for_review]  # Proper indentation
+      - develop
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write 
 
 jobs:
-  terraform-deploy:
+  terraform-plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
-      # Step to login to Azure using OIDC
-      - name: Login to Azure using OIDC
+      - name: Login to Azure using Managed Identity
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          managed-identity: true
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Set environment variables for Terraform to use Service Principal auth
-      - name: Set Terraform Azure credentials
-        run: |
-          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-
-      - name: Terraform init and validate
-        run: |
-          terraform init
-
-      - name: Terraform plan
-        run: |
-          terraform plan --var-file=dev_terraform.tfvars
-
-      - name: Create Pull Request from Dev to Prod
-        if: success()
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Automated PR: Terraform Plan Successful"
-          branch: dev
-          base: main
-          title: "Promote changes from dev to prod"
-          body: |
-            This PR was automatically created based on the successful execution of `terraform plan` in the `dev` branch.
-            Upon approval, this will trigger `terraform apply` on the `prod` environment.
-
-  terraform-apply:
-    name: Terraform Apply on Prod
-    runs-on: ubuntu-latest
-    needs: terraform-deploy  # Correct dependency
-    if: github.event.review.state == 'approved'   # This requires a `pull_request_target` event
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-
-      - name: Initialize Terraform
+      - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Apply
-        run: terraform apply --auto-approve
+      - name: Terraform Plan
+        id: terraform-plan
+        run: terraform plan --var-file=develop_terraform.tfvars -out=tfplan
 
-      - name: Success Message
-        run: echo "Terraform Apply Successful!"
+      - name: Check for Changes
+        id: check-changes
+        run: |
+          terraform show -json tfplan > plan.json
+          changes=$(jq '.resource_changes | length' plan.json)
+          echo "CHANGES_DETECTED=$changes" >> $GITHUB_ENV
 
-
-        
-
-        
-
-
+      
