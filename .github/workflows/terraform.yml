@@ -28,7 +28,7 @@ jobs:
       - name: Login to Azure using Managed Identity
         uses: azure/login@v1
         with:
-          managed-identity: true
+          auth-type: 'azure-cli'
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
