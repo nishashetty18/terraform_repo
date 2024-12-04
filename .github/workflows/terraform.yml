@@ -55,16 +55,16 @@ jobs:
           terraform show tfplan
 
       - name: Convert Plan to JSON
-      run: |
-        if [ ! -f tfplan ]; then
-          echo "tfplan file not found!"
-          exit 1
-        fi
-        terraform show -json tfplan > plan.json || { echo "Failed to generate plan.json"; exit 1; }
-        if [ ! -s plan.json ]; then
-          echo "Generated plan.json is empty or invalid."
-          exit 1
-        fi
-      shell: bash
+        run: |
+          if [ ! -f tfplan ]; then
+            echo "tfplan file not found!"
+            exit 1
+          fi
+          terraform show -json tfplan > plan.json || { echo "Failed to generate plan.json"; exit 1; }
+          if [ ! -s plan.json ]; then
+            echo "Generated plan.json is empty or invalid."
+            exit 1
+          fi
+        shell: bash
 
       
