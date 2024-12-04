@@ -71,8 +71,8 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
 
-        - name: Notify Changes for Approval
-          if: env.CHANGES_DETECTED != '0'
-          run: |
-            echo "Changes detected in the plan. Sending notification for approval."
-            echo "Terraform changes detected. Please review and approve." | mail -s "Terraform Plan Approval Needed" recipient@example.com
+      - name: Notify Changes for Approval
+        if: env.CHANGES_DETECTED != '0'
+        run: |
+          echo "Changes detected in the plan. Sending notification for approval."
+          echo "Terraform changes detected. Please review and approve." | mail -s "Terraform Plan Approval Needed" recipient@example.com
