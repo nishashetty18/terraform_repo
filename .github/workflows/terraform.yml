@@ -50,7 +50,12 @@ jobs:
         id: check-changes
         run: |
           terraform show -json tfplan > plan.json
+          if [ ! -s plan.json ]; then
+            echo "Error: plan.json is empty or invalid."
+            exit 1
+          fi
           changes=$(jq '.resource_changes | length' plan.json)
           echo "CHANGES_DETECTED=$changes" >> $GITHUB_ENV
+
 
       
