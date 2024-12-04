@@ -46,16 +46,20 @@ jobs:
         id: terraform-plan
         run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan
 
-      - name: Check for Changes
-        id: check-changes
+      - name: Validate Plan File
         run: |
-          terraform show -json tfplan > plan.json
-          if [ ! -s plan.json ]; then
-            echo "Error: plan.json is empty or invalid."
+          if [ ! -f tfplan ]; then
+            echo "Plan file not found!"
             exit 1
           fi
-          changes=$(jq '.resource_changes | length' plan.json)
-          echo "CHANGES_DETECTED=$changes" >> $GITHUB_ENV
+          terraform show tfplan
 
+      - name: Generate JSON Plan
+        run: |
+          terraform show -json tfplan > plan.json || { echo "Failed to generate plan.json"; exit 1; }
+          if [ ! -s plan.json ]; then
+            echo "Generated plan.json is empty or invalid."
+            exit 1
+          fi
 
       
