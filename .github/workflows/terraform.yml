@@ -44,10 +44,9 @@ jobs:
 
       - name: Terraform Plan
         id: terraform-plan
-        run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan -lock=false
+        run: terraform plan --var-file=dev_terraform.tfvars -out tf.plan -lock=false
 
-      - name: 
-        run: terraform plan -no-color > output.txt
+      
 
       # Convert Terraform Plan to JSON
       - name: Convert Plan to JSON
