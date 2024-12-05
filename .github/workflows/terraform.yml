@@ -66,23 +66,18 @@ jobs:
       - name: Print changes output for debugging
         run: |
           echo "Terraform plan changes: ${{ steps.check-changes.outputs.changes }}"
-
-
-  send-email:
-    needs: terraform-plan
-    runs-on: ubuntu-latest
-    if: ${{ needs.terraform-plan.steps.check-chenges.outputs.changes == 'true' }}  # Only run if changes are detected
-
-    steps:
+          
+      # Only send email if there are changes in the Terraform plan
       - name: Send email notification with plan changes
+        if: ${{ steps.check-changes.outputs.changes == 'true' }}
         uses: dawidd6/action-send-mail@v2
         with:
           # Mail server settings
           server_address: smtp.gmail.com
           server_port: 465  # SSL port for Gmail
           # User credentials
-          username: ${{ secrets.SMTP_USERNAME }}  # Email for sending
-          password: ${{ secrets.SMTP_PASSWORD }}  # Email password or app-specific password
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
           # Email subject
           subject: "Terraform Plan Job: ${{ github.job }} of ${{ github.repository }} has ${{ job.status }}"
           # Email body with the actual Terraform plan changes (added/modified/destroyed resources)
@@ -95,3 +90,6 @@ jobs:
           to: ${{ secrets.RECIPIENT_EMAIL }}
           # From email address (same as the sending email)
           from: ${{ secrets.SMTP_USERNAME }}
+
+
+  
