@@ -64,6 +64,7 @@ jobs:
             echo "Terraform plan contains changes: $changes changes detected." | mail -s "Terraform Plan Changes Detected" recipient@example.com
           else
             echo "No changes detected in the Terraform plan."
+          fi
         env:
           SMTP_SERVER: smtp.example.com
           SMTP_PORT: 587
