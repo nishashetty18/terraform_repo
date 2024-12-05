@@ -48,12 +48,12 @@ jobs:
 
       # Convert Terraform Plan to Text
       - name: Convert Plan to Text
-        run: terraform show -no-color tf.plan > tfplan.json
+        run: terraform show -no-color tf.plan > plan.json
 
       - name: Check for Changes
         id: check-changes
         run: |
-          changes=$(grep -E '^\s*[~+-]' tfplan.json | wc -l)
+          changes=$(grep -E '^\s*[~+-]' plan.json | wc -l)
           echo "Changes detected: $changes"
           # Set an output for the next job to use
           if [ "$changes" -gt 0 ]; then
