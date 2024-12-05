@@ -44,31 +44,50 @@ jobs:
 
       - name: Terraform Plan
         id: terraform-plan
-        run: terraform plan --var-file=dev_terraform.tfvars -out tf.plan -lock=false
+        run: terraform plan --var-file=dev_terraform.tfvars -out=tf.plan -lock=false
 
-      
-
-      # Convert Terraform Plan to JSON
-      - name: Convert Plan to JSON
+      # Convert Terraform Plan to Text
+      - name: Convert Plan to Text
         run: terraform show -no-color tf.plan > tfplan.txt
 
-      - name: Check for Changes and Notify
+      - name: Check for Changes
         id: check-changes
         run: |
-          grep -E '^\s*[~+-]' tfplan.txt || echo "No changes detected in the plan"
           changes=$(grep -E '^\s*[~+-]' tfplan.txt | wc -l)
           echo "Changes detected: $changes"
           echo "CHANGES=$changes" >> $GITHUB_ENV
-
+          echo "Changes detected: $changes"
+          # Set output if changes are detected
           if [ "$changes" -gt 0 ]; then
-            echo "Changes detected in the Terraform plan. Sending email notification..."
-            echo "Terraform plan contains changes: $changes changes detected." | mail -s "Terraform Plan Changes Detected" -r ${{ secrets.SMTP_USERNAME }} --smtp-server ${{ secrets.SMTP_SERVER }} --smtp-username ${{ secrets.SMTP_USERNAME }} --smtp-password ${{ secrets.SMTP_PASSWORD }} ${{ secrets.RECIPIENT_EMAIL }}
+            echo "changes=true" >> $GITHUB_ENV
           else
-            echo "No changes detected in the Terraform plan."
+            echo "changes=false" >> $GITHUB_ENV
           fi
-        env:
-          SMTP_SERVER: smtp.gmail.com
-          SMTP_PORT: 587
-          SMTP_USERNAME: ${{secrets.SMTP_USERNAME}}
-          SMTP_PASSWORD: ${{secrets.SMTP_PASSWORD}}
-          RECIPIENT_EMAIL: ${{secrets.RECIPIENT_EMAIL}}
+          
+  send-email:
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    if: ${{ needs.terraform-plan.outputs.changes == 'true' }}  # Only run if changes are detected
+
+    steps:
+      - name: Send email notification with plan changes
+        uses: dawidd6/action-send-mail@v2
+        with:
+          # Mail server settings
+          server_address: smtp.gmail.com
+          server_port: 465  # SSL port for Gmail
+          # User credentials
+          username: ${{ secrets.SMTP_USERNAME }}  # Email for sending
+          password: ${{ secrets.SMTP_PASSWORD }}  # Email password or app-specific password
+          # Email subject
+          subject: "Terraform Plan Job: ${{ github.job }} of ${{ github.repository }} has ${{ job.status }}"
+          # Email body with the actual Terraform plan changes (added/modified/destroyed resources)
+          body: |
+            The ${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has ${ job.status }.
+            Here are the changes detected in the Terraform plan:
+            
+            $(cat tfplan.txt)
+          # Comma-separated string, send email to
+          to: ${{ secrets.RECIPIENT_EMAIL }}
+          # From email address (same as the sending email)
+          from: ${{ secrets.SMTP_USERNAME }}
