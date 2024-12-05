@@ -64,7 +64,7 @@ jobs:
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
       - name: Print changes output for debugging
-        run: python.py changes.py
+        run: python3.py changes.py
 
       # Only send email if there are changes in the Terraform plan
       - name: Send email notification with plan changes
