@@ -52,40 +52,21 @@ jobs:
       - name: Convert Plan to JSON
         run: terraform show -no-color tf.plan > tfplan.txt
 
-      # Parse Plan JSON for Changes
-      - name: Check for Changes
-        id: check_changes
+      - name: Check for Changes and Notify
+        id: check-changes
         run: |
-          changes=$(jq '[.resource_changes[] | select(.change.actions | contains(["create", "update", "delete"]))]' plan.json)
-          echo "$changes" > changes.json
-          if [ -s changes.json ]; then
-            echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
+          changes=$(grep -E '^[~+]' tfplan.txt | wc -l)
+          echo "Changes detected: $changes"
+          echo "CHANGES=$changes" >> $GITHUB_ENV
+
+          if [ "$changes" -gt 0 ]; then
+            echo "Changes detected in the Terraform plan. Sending email notification..."
+            echo "Terraform plan contains changes: $changes changes detected." | mail -s "Terraform Plan Changes Detected" recipient@example.com
           else
-            echo "CHANGES_DETECTED=false" >> $GITHUB_ENV
-          fi
+            echo "No changes detected in the Terraform plan."
         env:
-          GITHUB_ENV: ${{ env.GITHUB_ENV }}
-
-      # Send Email if Changes Detected
-      - name: Send Email Notification
-        if: env.CHANGES_DETECTED == 'true'
-        run: |
-          echo "Changes detected in the Terraform plan, sending email."
-          cat changes.json | jq '.' > formatted_changes.txt
-
-          # Configure msmtp for SMTP email
-          echo "account default" > ~/.msmtprc
-          echo "host smtp.gmail.com" >> ~/.msmtprc
-          echo "port 587" >> ~/.msmtprc
-          echo "from your-email@gmail.com" >> ~/.msmtprc
-          echo "user your-email@gmail.com" >> ~/.msmtprc
-          echo "password ${{ secrets.SMTP_PASSWORD }}" >> ~/.msmtprc
-          echo "tls on" >> ~/.msmtprc
-          echo "tls_starttls on" >> ~/.msmtprc
-          echo "auth on" >> ~/.msmtprc
-          echo "logfile ~/.msmtp.log" >> ~/.msmtprc
-
-          # Send the email using msmtp
-          echo -e "Subject: Terraform Plan Changes Detected\n\nThe following changes were detected:\n\n$(cat formatted_changes.txt)" | msmtp recipient@example.com
-        env:
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SERVER: smtp.example.com
+          SMTP_PORT: 587
+          SMTP_USERNAME: your-email@example.com
+          SMTP_PASSWORD: your-password
+          RECIPIENT_EMAIL: recipient@example.com
