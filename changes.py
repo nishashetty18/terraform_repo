@@ -2,7 +2,7 @@ import re
 
 # Define a function to parse the plain text and extract resource name and action
 def extract_changes_from_txt(file_path):
-    changes = []
+    changes = set()  # Use a set to avoid duplicates
 
     # Define regular expressions to match resource actions (create, update, delete)
     create_pattern = re.compile(r'(\S+)\s+will be created')
@@ -18,22 +18,22 @@ def extract_changes_from_txt(file_path):
                 update_match = update_pattern.search(line)
                 delete_match = delete_pattern.search(line)
 
-                # Append resource and action to the changes list
+                # Append resource and action to the changes set (avoiding duplicates)
                 if create_match:
-                    changes.append(f"{create_match.group(1)}: create")
+                    changes.add(f"{create_match.group(1)}: create")
                 elif update_match:
-                    changes.append(f"{update_match.group(1)}: update")
+                    changes.add(f"{update_match.group(1)}: update")
                 elif delete_match:
-                    changes.append(f"{delete_match.group(1)}: delete")
+                    changes.add(f"{delete_match.group(1)}: delete")
 
     except FileNotFoundError:
         print(f"Error: The file '{file_path}' was not found.")
         return []
 
-    return changes
+    return list(changes)
 
-# Path to your plain text file (adjust this to your file path)
-file_path = 'readable_plan.txt'
+# Update file_path to reflect the location of the plan.txt in GitHub Actions
+file_path = 'readable_plan.txt'  # Adjust the path as needed
 
 # Extract changes
 changes = extract_changes_from_txt(file_path)
