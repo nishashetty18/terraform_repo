@@ -55,7 +55,8 @@ jobs:
       - name: Check for Changes and Notify
         id: check-changes
         run: |
-          changes=$(grep -E '^[~+]' tfplan.txt | wc -l)
+          grep -E '^\s*[~+]' tfplan.txt || echo "No changes detected in the plan"
+          changes=$(grep -E '^\s*[~+]' tfplan.txt | wc -l)
           echo "Changes detected: $changes"
           echo "CHANGES=$changes" >> $GITHUB_ENV
 
