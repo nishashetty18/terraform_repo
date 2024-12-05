@@ -1,7 +1,7 @@
 import re
 
 # Define a function to parse the plain text and extract resource name and action
-def extract_changes_from_txt(readable_plan.txt):
+def extract_changes_from_txt(file_path):
     changes = []
 
     # Define regular expressions to match resource actions (create, update, delete)
@@ -33,7 +33,7 @@ def extract_changes_from_txt(readable_plan.txt):
     return changes
 
 # Path to your plain text file (adjust this to your file path)
-file_path = 'plan.txt'
+file_path = 'readable_plan.txt'
 
 # Extract changes
 changes = extract_changes_from_txt(file_path)
