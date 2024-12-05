@@ -55,8 +55,8 @@ jobs:
       - name: Check for Changes and Notify
         id: check-changes
         run: |
-          grep -E '^\s*[~+]' tfplan.txt || echo "No changes detected in the plan"
-          changes=$(grep -E '^\s*[~+]' tfplan.txt | wc -l)
+          grep -E '^\s*[~+-]' tfplan.txt || echo "No changes detected in the plan"
+          changes=$(grep -E '^\s*[~+-]' tfplan.txt | wc -l)
           echo "Changes detected: $changes"
           echo "CHANGES=$changes" >> $GITHUB_ENV
 
@@ -67,8 +67,8 @@ jobs:
             echo "No changes detected in the Terraform plan."
           fi
         env:
-          SMTP_SERVER: smtp.example.com
+          SMTP_SERVER: smtp.gmail.com
           SMTP_PORT: 587
-          SMTP_USERNAME: your-email@example.com
-          SMTP_PASSWORD: your-password
-          RECIPIENT_EMAIL: recipient@example.com
+          SMTP_USERNAME: ${{secrets.SMTP_USERNAME}}
+          SMTP_PASSWORD: ${{secrets.SMTP_PASSWORD}}
+          RECIPIENT_EMAIL: ${{secrets.RECIPIENT_EMAIL}}
