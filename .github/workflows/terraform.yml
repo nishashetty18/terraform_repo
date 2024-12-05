@@ -45,18 +45,19 @@ jobs:
       - name: Terraform Plan
         id: terraform-plan
         run: |
-          terraform plan --var-file=dev_terraform.tfvars -lock=false -out=tfplan
-          terraform show -json tfplan > plan.json
-          echo "Generated plan.json:"
-          cat plan.json || echo "plan.json is empty or missing"
+          terraform plan --var-file=dev_terraform.tfvars -lock=false -out tfplan.out
+          terraform show tfplan.out
+          terraform show tfplan.out > readable_plan.txt
+          
+          
 
       #     ls -la
 
       # # Convert Terraform Plan to Text
-      # - name: Convert Plan to Text
-      #   run: |
-      #     sleep 30
-      #     cat plan.json
+      - name: Convert Plan to Text
+        run: |
+          sleep 30
+          cat readable_plan.txt
 
       # - name: Check for Changes
       #   id: check-changes
