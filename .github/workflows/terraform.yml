@@ -44,11 +44,11 @@ jobs:
 
       - name: Terraform Plan
         id: terraform-plan
-        run: terraform plan --var-file=dev_terraform.tfvars -out=tf.plan -lock=false
+        run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan -lock=false
 
       # Convert Terraform Plan to Text
       - name: Convert Plan to Text
-        run: terraform show -no-color tf.plan > plan.json
+        run: terraform show -json tfplan > plan.json
 
       - name: Check for Changes
         id: check-changes
