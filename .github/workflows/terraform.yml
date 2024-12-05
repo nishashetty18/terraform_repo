@@ -46,13 +46,12 @@ jobs:
         id: terraform-plan
         run: |
           terraform plan --var-file=dev_terraform.tfvars -lock=false -out=tfplan
-          sleep 30
+          terraform show -json tfplan > plan.json
           ls -la
 
       # Convert Terraform Plan to Text
       - name: Convert Plan to Text
         run: |
-          terraform show -json tfplan > plan.json
           sleep 30
           cat plan.json
 
