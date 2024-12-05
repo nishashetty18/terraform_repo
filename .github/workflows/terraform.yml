@@ -71,7 +71,7 @@ jobs:
   send-email:
     needs: terraform-plan
     runs-on: ubuntu-latest
-    if: ${{ needs.terraform-plan.outputs.changes == 'true' }}  # Only run if changes are detected
+    if: ${{ needs.terraform-plan.steps.check-chenges.outputs.changes == 'true' }}  # Only run if changes are detected
 
     steps:
       - name: Send email notification with plan changes
