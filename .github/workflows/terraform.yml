@@ -48,12 +48,12 @@ jobs:
 
       # Convert Terraform Plan to Text
       - name: Convert Plan to Text
-        run: terraform show -no-color tf.plan > tfplan.txt
+        run: terraform show -no-color tf.plan > tfplan.json
 
       - name: Check for Changes
         id: check-changes
         run: |
-          changes=$(grep -E '^\s*[~+-]' tfplan.txt | wc -l)
+          changes=$(grep -E '^\s*[~+-]' tfplan.json | wc -l)
           echo "Changes detected: $changes"
           # Set an output for the next job to use
           if [ "$changes" -gt 0 ]; then
@@ -64,9 +64,8 @@ jobs:
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
       - name: Print changes output for debugging
-        run: |
-          echo "Terraform plan changes: ${{ steps.check-changes.outputs.changes }}"
-          
+        run: python.py changes.py
+
       # Only send email if there are changes in the Terraform plan
       - name: Send email notification with plan changes
         if: ${{ steps.check-changes.outputs.changes == 'true' }}
