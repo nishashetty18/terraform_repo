@@ -63,6 +63,9 @@ jobs:
             echo "changes=true" >> $GITHUB_ENV
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
+      - name: Print changes output for debugging
+        run: echo "Terraform plan changes: ${{ steps.check-changes.outputs.changes }}"
+
 
   send-email:
     needs: terraform-plan
