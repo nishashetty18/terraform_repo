@@ -23,7 +23,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.9.6
 
       - name: Login to Azure using OIDC
         uses: azure/login@v1
@@ -44,27 +44,38 @@ jobs:
 
       - name: Terraform Plan
         id: terraform-plan
-        run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan -lock=false
-
-      # Convert Terraform Plan to Text
-      - name: Convert Plan to Text
-        run: terraform show -json tfplan > plan.json
-
-      - name: Check for Changes
-        id: check-changes
         run: |
-          changes=$(grep -E '^\s*[~+-]' plan.json | wc -l)
-          echo "Changes detected: $changes"
-          # Set an output for the next job to use
-          if [ "$changes" -gt 0 ]; then
-            echo "changes=true" >> $GITHUB_ENV
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes=false" >> $GITHUB_ENV
-            echo "changes=false" >> $GITHUB_OUTPUT
-          fi
+          terraform plan --var-file=dev_terraform.tfvars -lock=false -out tfplan.out
+          terraform show tfplan.out
+          terraform show tfplan.out > readable_plan.txt
+          
+          
+
+      #     ls -la
+
+      # # Convert Terraform Plan to Text
+      # - name: Convert Plan to Text
+      #   run: |
+      #     sleep 30
+      #     cat readable_plan.txt
+
+      # - name: Check for Changes
+      #   id: check-changes
+      #   run: |
+      #     changes=$(grep -E '^\s*[~+-]' plan.json | wc -l)
+      #     echo "Changes detected: $changes"
+      #     # Set an output for the next job to use
+      #     if [ "$changes" -gt 0 ]; then
+      #       echo "changes=true" >> $GITHUB_ENV
+      #       echo "changes=true" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "changes=false" >> $GITHUB_ENV
+      #       echo "changes=false" >> $GITHUB_OUTPUT
+      #     fi
       - name: Print changes output for debugging
-        run: python3 changes.py
+        run: |
+          python changes.py
+          cat changes_summary.txt
 
       # Only send email if there are changes in the Terraform plan
       - name: Send email notification with plan changes
