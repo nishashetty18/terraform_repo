@@ -8,11 +8,9 @@ terraform {
 }
 
 provider "azurerm" {
-  use_oidc = true
-  features {
-    resource_group {
-       prevent_deletion_if_contains_resources = false
-     }
-  }
+features {
+  
+}
+subscription_id = "90d29f58-fc4f-4134-9731-a9c6d9ebe7d6"
   
 }
