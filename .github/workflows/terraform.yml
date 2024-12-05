@@ -46,41 +46,44 @@ jobs:
         id: terraform-plan
         run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan
 
-      - name: Debug Plan File
-        run: |
-          if [ -f tfplan ]; then
-            echo "tfplan exists and is:"
-            file tfplan
-          else
-            echo "tfplan file is missing."
-            exit 1
-          fi
-
+      # Convert Terraform Plan to JSON
       - name: Convert Plan to JSON
-        run: |
-          terraform show -json tfplan > plan.json 
-          if [ ! -f plan.json ]; then
-            echo "plan.json file does not exist!"
-            exit 1
-          fi
-          if [ ! -s plan.json ]; then
-            echo "plan.json is empty or invalid!"
-            exit 1
-          fi
+        run: terraform show -json tfplan > plan.json
 
+      # Parse Plan JSON for Changes
       - name: Check for Changes
+        id: check_changes
         run: |
-          changes=$(jq '.resource_changes | length' plan.json)
-          echo "CHANGES_DETECTED=$changes" >> $GITHUB_ENV
-          if [ "$changes" -gt 0 ]; then
-            echo "Changes detected in the Terraform plan: $changes resources modified."
-            # Trigger email notification or manual approval step here
-            exit 1
+          changes=$(jq '[.resource_changes[] | select(.change.actions | contains(["create", "update", "delete"]))]' plan.json)
+          echo "$changes" > changes.json
+          if [ -s changes.json ]; then
+            echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
           else
-            echo "No changes detected in the Terraform plan."
+            echo "CHANGES_DETECTED=false" >> $GITHUB_ENV
           fi
         env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          GITHUB_ENV: ${{ env.GITHUB_ENV }}
+
+      # Send Email if Changes Detected
+      - name: Send Email Notification
+        if: env.CHANGES_DETECTED == 'true'
+        run: |
+          echo "Changes detected in the Terraform plan, sending email."
+          cat changes.json | jq '.' > formatted_changes.txt
+
+          # Configure msmtp for SMTP email
+          echo "account default" > ~/.msmtprc
+          echo "host smtp.gmail.com" >> ~/.msmtprc
+          echo "port 587" >> ~/.msmtprc
+          echo "from your-email@gmail.com" >> ~/.msmtprc
+          echo "user your-email@gmail.com" >> ~/.msmtprc
+          echo "password ${{ secrets.SMTP_PASSWORD }}" >> ~/.msmtprc
+          echo "tls on" >> ~/.msmtprc
+          echo "tls_starttls on" >> ~/.msmtprc
+          echo "auth on" >> ~/.msmtprc
+          echo "logfile ~/.msmtp.log" >> ~/.msmtprc
+
+          # Send the email using msmtp
+          echo -e "Subject: Terraform Plan Changes Detected\n\nThe following changes were detected:\n\n$(cat formatted_changes.txt)" | msmtp recipient@example.com
+        env:
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
