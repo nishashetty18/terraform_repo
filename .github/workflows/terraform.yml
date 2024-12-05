@@ -54,10 +54,10 @@ jobs:
       #     ls -la
 
       # # Convert Terraform Plan to Text
-      - name: Convert Plan to Text
-        run: |
-          sleep 30
-          cat readable_plan.txt
+      # - name: Convert Plan to Text
+      #   run: |
+      #     sleep 30
+      #     cat readable_plan.txt
 
       # - name: Check for Changes
       #   id: check-changes
