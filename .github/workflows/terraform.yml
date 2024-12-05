@@ -60,8 +60,10 @@ jobs:
           # Set output if changes are detected
           if [ "$changes" -gt 0 ]; then
             echo "changes=true" >> $GITHUB_ENV
+            echo "changes=true" >> $GITHUB_OUTPUT
           else
             echo "changes=false" >> $GITHUB_ENV
+            echo "changes=false" >> $GITHUB_OUTPUT
           fi
           
   send-email:
