@@ -70,7 +70,7 @@ jobs:
       #     fi
       - name: Print changes output for debugging
         run: |
-          python3 changes.py
+          python changes.py
           cat changes_summary.txt
 
       # Only send email if there are changes in the Terraform plan
