@@ -55,9 +55,7 @@ jobs:
         run: |
           changes=$(grep -E '^\s*[~+-]' tfplan.txt | wc -l)
           echo "Changes detected: $changes"
-          echo "CHANGES=$changes" >> $GITHUB_ENV
-          echo "Changes detected: $changes"
-          # Set output if changes are detected
+          # Set an output for the next job to use
           if [ "$changes" -gt 0 ]; then
             echo "changes=true" >> $GITHUB_ENV
             echo "changes=true" >> $GITHUB_OUTPUT
@@ -65,7 +63,7 @@ jobs:
             echo "changes=false" >> $GITHUB_ENV
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
-          
+
   send-email:
     needs: terraform-plan
     runs-on: ubuntu-latest
