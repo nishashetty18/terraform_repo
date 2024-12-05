@@ -23,7 +23,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.9.6
 
       - name: Login to Azure using OIDC
         uses: azure/login@v1
