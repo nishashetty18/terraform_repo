@@ -44,15 +44,14 @@ jobs:
 
       - name: Terraform Plan
         id: terraform-plan
-        run: terraform plan --var-file=dev_terraform.tfvars -out=tfplan
+        run: terraform plan --var-file=dev_terraform.tfvars -out tfplan
+
+      - name: 
+        run: terraform plan -no-color > output.txt
 
       # Convert Terraform Plan to JSON
       - name: Convert Plan to JSON
         run: terraform show -no-color tf.plan > tfplan.txt
-
-
-      - name: 
-        run: terraform plan -no-color > output.txt
 
       # Parse Plan JSON for Changes
       - name: Check for Changes
