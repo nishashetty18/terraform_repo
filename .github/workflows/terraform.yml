@@ -48,7 +48,9 @@ jobs:
 
       # Convert Terraform Plan to Text
       - name: Convert Plan to Text
-        run: terraform show -json tfplan > plan.json
+        run: |
+          terraform show -json tfplan > plan.json
+          cat plan.json
 
       # - name: Check for Changes
       #   id: check-changes
