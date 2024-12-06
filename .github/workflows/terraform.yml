@@ -68,6 +68,7 @@ jobs:
         run: |
           python changes.py
           cat changes_summary.txt
+          
       - name: Check Plan for Changes
         id: check-plan
         run: |
@@ -82,7 +83,7 @@ jobs:
       - name: Read Plan File
         id: read-plan
         run: |
-          body=$(cat readable_plan.txt)
+          body=$(cat changes_summary.txt)
           echo "EMAIL_BODY<<EOF" >> $GITHUB_ENV
           echo "$body" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
