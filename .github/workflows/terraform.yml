@@ -97,7 +97,7 @@ jobs:
         run: |
           swaks \
           --to ${{ secrets.SMTP_USERNAME }} \
-          --from ${{ secrets.default_username }}@sandbox@sandbox.mailtarget.co \
+          --from ${{ secrets.default_username }}@sandbox.mailtarget.co \
           --auth \
           --auth-user=${{ secrets.auth_user_smtp}} \
           --auth-password=${{ secrets.auth_password_smtp}} \
