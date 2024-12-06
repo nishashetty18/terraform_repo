@@ -96,7 +96,7 @@ jobs:
         if: env.SEND_MAIL == 'true'
         run: |
           swaks \
-          --to ${{ secrets.RECIPIENT_EMAIL }} \
+          --to ${{ secrets.SMTP_USERNAME }} \
           --from ${{ secrets.SMTP_USERNAME }} \
           --auth \
           --auth-user=${{ secrets.auth_user_smtp}} \
