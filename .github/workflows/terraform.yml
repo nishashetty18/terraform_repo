@@ -51,55 +51,72 @@ jobs:
           
           
 
-      #     ls -la
-
-      # # Convert Terraform Plan to Text
-      # - name: Convert Plan to Text
-      #   run: |
-      #     sleep 30
-      #     cat readable_plan.txt
-
-      # - name: Check for Changes
-      #   id: check-changes
-      #   run: |
-      #     changes=$(grep -E '^\s*[~+-]' plan.json | wc -l)
-      #     echo "Changes detected: $changes"
-      #     # Set an output for the next job to use
-      #     if [ "$changes" -gt 0 ]; then
-      #       echo "changes=true" >> $GITHUB_ENV
-      #       echo "changes=true" >> $GITHUB_OUTPUT
-      #     else
-      #       echo "changes=false" >> $GITHUB_ENV
-      #       echo "changes=false" >> $GITHUB_OUTPUT
-      #     fi
+      - name: Check for Changes
+        id: check-changes
+        run: |
+          changes=$(grep -E '^\s*[~+-]' plan.json | wc -l)
+          echo "Changes detected: $changes"
+          # Set an output for the next job to use
+          if [ "$changes" -gt 0 ]; then
+            echo "changes=true" >> $GITHUB_ENV
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_ENV
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
       - name: Print changes output for debugging
         run: |
           python changes.py
           cat changes_summary.txt
 
+      - name: Read Plan File
+        id: read-plan
+        run: |
+          body=$(cat readable_plan.txt)
+          echo "EMAIL_BODY<<EOF" >> $GITHUB_ENV
+          echo "$body" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      # Step 1: Install swaks
+      - name: Install swaks
+        run: sudo apt-get update && sudo apt-get install -y swaks
+
       # Only send email if there are changes in the Terraform plan
       - name: Send email notification with plan changes
         if: ${{ steps.check-changes.outputs.changes == 'true' }}
-        uses: dawidd6/action-send-mail@v2
-        with:
-          # Mail server settings
-          server_address: smtp.gmail.com
-          server_port: 465  # SSL port for Gmail
-          # User credentials
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-          # Email subject
-          subject: "Terraform Plan Job: ${{ github.job }} of ${{ github.repository }} has ${{ job.status }}"
-          # Email body with the actual Terraform plan changes (added/modified/destroyed resources)
-          body: |
-            The ${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has ${ job.status }.
-            Here are the changes detected in the Terraform plan:
+        run: |
+          swaks \
+          --to ${{ secrets.RECIPIENT_EMAIL }} \
+          --from ${{ secrets.SMTP_USERNAME }} \
+          --auth \
+          --auth-user=${{ secrets.auth_user_smtp}} \
+          --auth-password=${{ secrets.auth_password_smtp}} \
+          --server smtp-sandbox.mtrgt.net:587 \
+          --h-Subject: "Terrform Plan" \
+          --body "$EMAIL_BODY" \
+          --tls
+        # uses: dawidd6/action-send-mail@v2
+        # with:
+        #   # Mail server settings
+        #   server_address: smtp.gmail.com
+        #   server_port: 465  # SSL port for Gmail
+        #   # User credentials
+        #   username: ${{ secrets.SMTP_USERNAME }}
+        #   password: ${{ secrets.SMTP_PASSWORD }}
+        #   # Email subject
+        #   subject: "Terraform Plan Job: ${{ github.job }} of ${{ github.repository }} has ${{ job.status }}"
+        #   # Email body with the actual Terraform plan changes (added/modified/destroyed resources)
+        #   body: |
+        #     The ${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has ${ job.status }.
+        #     Here are the changes detected in the Terraform plan:
             
-            $(cat tfplan.txt)
-          # Comma-separated string, send email to
-          to: ${{ secrets.RECIPIENT_EMAIL }}
-          # From email address (same as the sending email)
-          from: ${{ secrets.SMTP_USERNAME }}
+        #     $(cat tfplan.txt)
+        #   # Comma-separated string, send email to
+        #   to: ${{ secrets.RECIPIENT_EMAIL }}
+        #   # From email address (same as the sending email)
+        #   from: ${{ secrets.SMTP_USERNAME }}
+
+         
 
 
   
