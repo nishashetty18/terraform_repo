@@ -68,6 +68,15 @@ jobs:
         run: |
           python changes.py
           cat changes_summary.txt
+      - name: Check Plan for Changes
+        id: check-plan
+        run: |
+          if grep -q "Plan: 0 to add, 0 to change, 0 to destroy" readable_plan.txt; then
+            echo "No changes detected."
+            echo "SEND_MAIL=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected."
+            echo "SEND_MAIL=true" >> $GITHUB_ENV
 
       - name: Read Plan File
         id: read-plan
@@ -83,7 +92,7 @@ jobs:
 
       # Only send email if there are changes in the Terraform plan
       - name: Send email notification with plan changes
-        if: ${{ steps.check-changes.outputs.changes == 'true' }}
+        if: env.SEND_MAIL == 'true'
         run: |
           swaks \
           --to ${{ secrets.RECIPIENT_EMAIL }} \
