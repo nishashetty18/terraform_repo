@@ -103,9 +103,11 @@ jobs:
           --auth-user=${{ secrets.auth_user_smtp}} \
           --auth-password=${{ secrets.auth_password_smtp}} \
           --server smtp-sandbox.mtrgt.net:587 \
-          --h-Subject: "Terrform Plan" \
-          --body "$EMAIL_BODY" \
-          --tls
+          --tls \
+          --h-Subject="Terraform Plan" \
+          --h-From="${{ secrets.default_username }}@sandbox.mailtarget.co" \
+          --h-To="${{ secrets.SMTP_USERNAME }}" \
+          --body "$EMAIL_BODY"
         # uses: dawidd6/action-send-mail@v2
         # with:
         #   # Mail server settings
