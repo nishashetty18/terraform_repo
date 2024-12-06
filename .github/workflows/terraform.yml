@@ -102,7 +102,7 @@ jobs:
           --auth \
           --auth-user=${{ secrets.auth_user_smtp}} \
           --auth-password=${{ secrets.auth_password_smtp}} \
-          --server smtp-sandbox.mtrgt.net:465 \
+          --server smtp-sandbox.mtrgt.net:587 \
           --h-Subject="Test Email" \
           --body "This is a test email."
           --tls \
